@@ -209,9 +209,10 @@ what to remove first.
 
 ## Demo deployment
 
-The portal also runs on Vercel as a serverless function (`api/index.py` and
-`vercel.json`). That host has a read-only filesystem apart from a scratch
-directory, so the deployment is a **demo only**:
+The portal also runs on Vercel as a serverless function. Vercel's Flask
+preset serves the WSGI app exported by `app.py` in the project root. That
+host has a read-only filesystem apart from a scratch directory, so the
+deployment is a **demo only**:
 
 - `PORTAL_DATA_DIR=/tmp/portal` puts the SQLite file and uploads in the one
   writable place.
