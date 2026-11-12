@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "macros.html" import delete_button %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<h1>Clients</h1>
+<p><a class="button" href="{{ url_for('manage.create', key='clients') }}">New client</a></p>
+{% if clients %}
+  <table>
+    <thead><tr><th>Client</th><th>Website</th><th>Brands</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for client in clients %}
+        <tr>
+          <td><a href="{{ url_for('clients.detail', client_id=client.id) }}">{{ client.name }}</a></td>
+          <td>{{ client.website_url or '' }}</td>
+          <td>{{ client.brands|length }}</td>
+          <td class="actions">
+            <a href="{{ url_for('manage.edit', key='clients', record_id=client.id) }}">Edit</a>
+            {{ delete_button(url_for('manage.delete', key='clients', record_id=client.id)) }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}<p class="empty">No clients have been added.</p>{% endif %}
+{% endblock %}

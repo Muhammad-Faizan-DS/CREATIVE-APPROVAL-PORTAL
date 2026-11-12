@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "macros.html" import child_section %}
+{% block title %}{{ team.name }}{% endblock %}
+{% block content %}
+<h1>{{ team.name }}</h1>
+{% if team.description %}<p>{{ team.description }}</p>{% endif %}
+<p><a href="{{ url_for('manage.index', key='teams') }}">All teams</a></p>
+{{ child_section('team_memberships', team, 'Members') }}
+<section class="panel">
+  <h2>Campaigns</h2>
+  {% if team.campaigns %}
+    <ul>
+      {% for campaign in team.campaigns %}
+        <li><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}<p class="empty">No campaigns are assigned to this team.</p>{% endif %}
+</section>
+{% endblock %}

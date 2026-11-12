@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "macros.html" import field_input %}
+{% block title %}{{ resource.singular|capitalize }} form{% endblock %}
+{% block content %}
+<h1>{{ "Edit" if record.id else "New" }} {{ resource.singular }}</h1>
+{% if parent %}<p class="context">For {{ parent }}</p>{% endif %}
+{% if errors.get('__all__') %}
+  <p class="error" role="alert">{{ errors['__all__'] }}</p>
+{% endif %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for field in resource.fields %}
+    {% if field.applies(record) %}
+      {{ field_input(field, values[field.name], errors.get(field.name), parent, record) }}
+    {% else %}
+      <p class="context">{{ field.label }} cannot change after creation.</p>
+    {% endif %}
+  {% endfor %}
+  <p>
+    <button type="submit">Save {{ resource.singular }}</button>
+    <a href="{{ back_url }}">Cancel</a>
+  </p>
+</form>
+{% endblock %}

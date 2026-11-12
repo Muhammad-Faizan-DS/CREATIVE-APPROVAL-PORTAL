@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "macros.html" import child_section %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block content %}
+<h1>{{ client.name }}</h1>
+{% if client.website_url %}<p><a href="{{ client.website_url }}">{{ client.website_url }}</a></p>{% endif %}
+
+{{ child_section('client_memberships', client, 'Members') }}
+{{ child_section('client_contacts', client, 'Contacts') }}
+
+<section class="panel">
+  <h2>Brands</h2>
+  {% if client.brands %}
+    <ul>
+      {% for brand in client.brands %}
+        <li><a href="{{ url_for('campaigns.brand_detail', brand_id=brand.id) }}">{{ brand.name }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}<p class="empty">No brands yet.</p>{% endif %}
+</section>
+{% endblock %}

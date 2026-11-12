@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Brands{% endblock %}
+{% block content %}
+<h1>Brands</h1>
+<p><a class="button" href="{{ url_for('campaigns.brand_create') }}">New brand</a></p>
+<ul>
+{% for brand in brands %}
+  <li>
+    <a href="{{ url_for('campaigns.brand_detail', brand_id=brand.id) }}">{{ brand.name }}</a>
+    ({{ brand.client.name }})
+    <a href="{{ url_for('campaigns.brand_edit', brand_id=brand.id) }}">Edit</a>
+    <form method="post"
+          action="{{ url_for('campaigns.brand_delete', brand_id=brand.id) }}"
+          class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="danger">Delete brand</button>
+    </form>
+  </li>
+{% else %}
+  <li>No brands have been added.</li>
+{% endfor %}
+</ul>
+{% endblock %}

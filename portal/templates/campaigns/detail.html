@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "macros.html" import child_section %}
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block content %}
+<h1>{{ campaign.name }}</h1>
+<p class="context">
+  <a href="{{ url_for('campaigns.brand_detail', brand_id=campaign.brand_id) }}">{{ campaign.brand.name }}</a>
+  for {{ campaign.brand.client.name }} &middot; team {{ campaign.team.name }} &middot;
+  {{ campaign.starts_on }}{% if campaign.ends_on %} to {{ campaign.ends_on }}{% endif %} &middot;
+  {{ campaign.status }}
+</p>
+<p><a href="{{ url_for('deliveries.index', campaign_id=campaign.id) }}">Delivery batches</a></p>
+
+{{ child_section('campaign_channels', campaign, 'Channels') }}
+{{ child_section('campaign_audiences', campaign, 'Audiences') }}
+{{ child_section('briefs', campaign, 'Briefs') }}
+{% endblock %}

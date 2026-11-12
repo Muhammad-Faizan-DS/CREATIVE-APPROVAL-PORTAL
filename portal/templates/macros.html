@@ -1,0 +1,83 @@
+{% macro delete_button(action, label='Delete', confirm=None) %}
+  <form method="post" action="{{ action }}" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">{{ label }}</button>
+  </form>
+{% endmacro %}
+
+{% macro field_input(field, value, error, parent=None, record=None) %}
+  <div class="field{% if error %} has-error{% endif %}">
+    <label for="f-{{ field.name }}">{{ field.label }}</label>
+    {% if field.kind == 'textarea' %}
+      <textarea id="f-{{ field.name }}" name="{{ field.name }}" rows="4"
+        {% if field.required %}required{% endif %}>{{ value }}</textarea>
+    {% elif field.kind in ('select', 'enum') %}
+      <select id="f-{{ field.name }}" name="{{ field.name }}"
+        {% if field.required %}required{% endif %}>
+        <option value="">Choose {{ field.label|lower }}</option>
+        {% for option_value, option_label in field.options(parent, record) %}
+          <option value="{{ option_value }}"
+            {% if value|string == option_value|string %}selected{% endif %}>
+            {{ option_label }}
+          </option>
+        {% endfor %}
+      </select>
+    {% elif field.kind == 'bool' %}
+      <input id="f-{{ field.name }}" type="checkbox" name="{{ field.name }}"
+        {% if value %}checked{% endif %}>
+    {% else %}
+      <input id="f-{{ field.name }}" name="{{ field.name }}"
+        type="{% if field.name == 'password' %}password{% elif field.kind == 'date' %}date{% elif field.kind == 'int' %}number{% elif field.kind == 'email' %}email{% elif field.kind == 'url' %}url{% else %}text{% endif %}"
+        value="{{ value }}"
+        {% if field.maxlength %}maxlength="{{ field.maxlength }}"{% endif %}
+        {% if field.min_value is not none %}min="{{ field.min_value }}"{% endif %}
+        {% if field.max_value is not none %}max="{{ field.max_value }}"{% endif %}
+        {% if field.required %}required{% endif %}>
+    {% endif %}
+    {% if field.help_text %}<p class="hint">{{ field.help_text }}</p>{% endif %}
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro child_section(key, parent, title=None) %}
+  {% set data = children(key, parent) %}
+  {% if data %}
+    <section class="panel">
+      <div class="panel-head">
+        <h2>{{ title or data.resource.title }}</h2>
+        {% if data.can_create %}
+          <a class="button" href="{{ data.create_url }}">Add {{ data.resource.singular }}</a>
+        {% endif %}
+      </div>
+      {% if data.rows %}
+        <table>
+          <thead>
+            <tr>
+              {% for header in data.resource.headers %}<th>{{ header }}</th>{% endfor %}
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in data.rows %}
+              <tr>
+                {% for cell in row.cells %}
+                  <td>
+                    {% if loop.first and row.detail_url %}
+                      <a href="{{ row.detail_url }}">{{ cell }}</a>
+                    {% else %}{{ cell }}{% endif %}
+                  </td>
+                {% endfor %}
+                <td class="actions">
+                  {% if row.can_edit %}<a href="{{ row.edit_url }}">Edit</a>{% endif %}
+                  {% if row.can_delete %}{{ delete_button(row.delete_url) }}{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="empty">Nothing here yet.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endmacro %}

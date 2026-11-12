@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p class="context">Signed in as {{ user.name }} ({{ user.role.label }}).</p>
+
+{% if campaigns %}
+  <section class="panel">
+    <h2>Campaigns</h2>
+    <table>
+      <thead><tr><th>Campaign</th><th>Brand</th><th>Team</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for campaign in campaigns %}
+          <tr>
+            <td><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></td>
+            <td>{{ campaign.brand.client.name }} / {{ campaign.brand.name }}</td>
+            <td>{{ campaign.team.name }}</td>
+            <td>{{ campaign.status }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endif %}
+
+{% if user.role.code == 'designer' %}
+  <section class="panel">
+    <h2>My tasks</h2>
+    {% if tasks %}
+      <ul>
+        {% for task in tasks %}
+          <li>
+            <a href="{{ url_for('briefs.task_detail', task_id=task.id) }}">{{ task.title }}</a>
+            &mdash; {{ task.status }}
+            {% if task.due_on %}(due {{ task.due_on }}){% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="empty">No tasks are assigned to you.</p>{% endif %}
+  </section>
+{% endif %}
+
+{% if user.role.code == 'client' %}
+  <section class="panel">
+    <h2>My briefs</h2>
+    {% if briefs %}
+      <ul>
+        {% for brief in briefs %}
+          <li>
+            <a href="{{ url_for('briefs.detail', brief_id=brief.id) }}">{{ brief.title }}</a>
+            &mdash; {{ brief.status }}, due {{ brief.due_on }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="empty">No briefs yet.</p>{% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Reviews assigned to me</h2>
+    {% if reviews %}
+      <ul>
+        {% for assignment in reviews %}
+          {% set round = assignment.review_round %}
+          <li>
+            <a href="{{ url_for('reviews.detail', round_id=round.id) }}">
+              {{ round.version.creative.name }} version {{ round.version.version_number }}</a>
+            &mdash; {{ version_status(round.version) }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="empty">Nothing waiting for your review.</p>{% endif %}
+  </section>
+{% endif %}
+
+{% if deliveries %}
+  <section class="panel">
+    <h2>Deliveries</h2>
+    <ul>
+      {% for batch in deliveries %}
+        <li>
+          <a href="{{ url_for('deliveries.detail', batch_id=batch.id) }}">{{ batch.title }}</a>
+          &mdash; {{ batch.campaign.name }},
+          {{ "sent " ~ batch.sent_at.strftime('%Y-%m-%d') if batch.is_sent else "draft" }}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% endblock %}

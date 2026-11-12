@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "macros.html" import child_section, delete_button %}
+{% block title %}Review{% endblock %}
+{% block content %}
+{% set user = current_user() %}
+{% set version = review_round.version %}
+<h1>Review of {{ version.creative.name }} version {{ version.version_number }}</h1>
+<p class="context">
+  <a href="{{ url_for('creatives.version_detail', version_id=version.id) }}">Back to the version</a>
+  &middot; opened by {{ review_round.opener.name }}
+  on {{ review_round.opened_at.strftime('%Y-%m-%d %H:%M') }}
+  &middot; status <strong>{{ version_status(version) }}</strong>
+</p>
+
+<section class="panel">
+  <h2>Decision</h2>
+  {% if review_round.decision %}
+    <p>
+      <strong>{{ review_round.decision.outcome.replace('_', ' ') }}</strong>
+      by {{ review_round.decision.decider.name }}
+      on {{ review_round.decision.created_at.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+    {% if review_round.decision.note %}<p>{{ review_round.decision.note }}</p>{% endif %}
+    {% if user.role.code == 'manager' or review_round.decision.decided_by == user.id %}
+      {{ delete_button(url_for('reviews.withdraw_decision', round_id=review_round.id), 'Withdraw decision') }}
+    {% endif %}
+  {% elif can_decide %}
+    <form method="post" action="{{ url_for('reviews.decide', round_id=review_round.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Outcome
+        <select name="outcome" required>
+          <option value="">Choose an outcome</option>
+          {% for outcome in outcomes %}
+            <option value="{{ outcome }}">{{ outcome.replace('_', ' ') }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Note (required when requesting changes)
+        <textarea name="note" rows="3"></textarea>
+      </label>
+      <button type="submit">Record decision</button>
+    </form>
+  {% else %}
+    <p class="empty">Waiting for the assigned reviewer to decide.</p>
+  {% endif %}
+</section>
+
+{{ child_section('review_assignments', review_round, 'Reviewers') }}
+{{ child_section('change_requests', review_round, 'Change requests') }}
+
+<section class="panel">
+  <h2>Comments</h2>
+  {% set comment_data = children('review_comments', review_round) %}
+  {% if comment_data %}
+    {% if comment_data.can_create %}
+      <p><a class="button" href="{{ comment_data.create_url }}">Add comment</a></p>
+    {% endif %}
+    {% for row in comment_data.rows %}
+      <article class="comment">
+        <p><strong>{{ row.obj.author.name }}</strong>
+          on {{ row.obj.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        <p>{{ row.obj.body }}</p>
+        <p class="actions">
+          {% if row.can_edit %}<a href="{{ row.edit_url }}">Edit</a>{% endif %}
+          {% if row.can_delete %}{{ delete_button(row.delete_url) }}{% endif %}
+        </p>
+        {{ child_section('review_attachments', row.obj, 'References') }}
+      </article>
+    {% else %}
+      <p class="empty">No comments yet.</p>
+    {% endfor %}
+  {% endif %}
+</section>
+
+{% if user.role.code == 'manager' and not review_round.decision %}
+  <section class="panel">
+    <h2>Manager actions</h2>
+    {{ delete_button(url_for('reviews.delete_round', round_id=review_round.id), 'Delete this round') }}
+  </section>
+{% endif %}
+{% endblock %}

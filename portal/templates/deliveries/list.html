@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "macros.html" import child_section %}
+{% block title %}Deliveries{% endblock %}
+{% block content %}
+<h1>Deliveries for {{ campaign.name }}</h1>
+<p class="context">
+  <a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">Back to the campaign</a>
+</p>
+{{ child_section('delivery_batches', campaign, 'Delivery batches') }}
+{% endblock %}

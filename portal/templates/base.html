@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Creative Approval Portal{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  {% set user = current_user() %}
+  {% if user %}
+    <header>
+      <nav aria-label="Main navigation">
+        <a class="brand" href="{{ url_for('dashboard.home') }}">Creative Approval Portal</a>
+        <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
+        {% if user.role.code == 'manager' %}
+          <a href="{{ url_for('clients.index') }}">Clients</a>
+          <a href="{{ url_for('campaigns.brand_list') }}">Brands</a>
+          <a href="{{ url_for('manage.index', key='campaigns') }}">Campaigns</a>
+          <a href="{{ url_for('settings.index') }}">Settings</a>
+        {% endif %}
+        <span class="who">{{ user.name }} &middot; {{ user.role.label }}</span>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Sign out</button>
+        </form>
+      </nav>
+    </header>
+  {% endif %}
+  <main>
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+      <p class="flash {{ category }}" role="status">{{ message }}</p>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

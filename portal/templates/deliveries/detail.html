@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "macros.html" import child_section, delete_button %}
+{% block title %}{{ batch.title }}{% endblock %}
+{% block content %}
+{% set user = current_user() %}
+<h1>{{ batch.title }}</h1>
+<p class="context">
+  Campaign
+  <a href="{{ url_for('campaigns.campaign_detail', campaign_id=batch.campaign_id) }}">{{ batch.campaign.name }}</a>
+  &middot; prepared by {{ batch.preparer.name }}
+  &middot; {{ "sent " ~ batch.sent_at.strftime('%Y-%m-%d %H:%M') if batch.is_sent else "draft" }}
+</p>
+
+{{ child_section('delivery_items', batch, 'Items') }}
+
+{% if batch.is_sent %}
+  <section class="panel">
+    <h2>Approved files</h2>
+    {% for item in batch.items %}
+      <article>
+        <h3>{{ item.label }}</h3>
+        {% for file in item.version.files %}
+          <p>
+            <a href="{{ url_for('creatives.serve_file', file_id=file.id) }}">{{ file.display_name }}</a>
+            <a href="{{ url_for('creatives.serve_file', file_id=file.id, download=1) }}">Download</a>
+          </p>
+          {% if file.kind == 'preview' %}
+            <img src="{{ url_for('creatives.serve_file', file_id=file.id) }}"
+                 alt="{{ file.display_name }}" class="thumb">
+          {% endif %}
+        {% endfor %}
+      </article>
+    {% endfor %}
+  </section>
+{% elif user.role.code == 'manager' %}
+  <form method="post" action="{{ url_for('deliveries.send', batch_id=batch.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Send this batch to the client</button>
+  </form>
+{% endif %}
+
+{% if can_acknowledge %}
+  <section class="panel">
+    <h2>Acknowledge receipt</h2>
+    <form method="post" action="{{ url_for('deliveries.acknowledge', batch_id=batch.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Note (optional) <textarea name="note" rows="2"></textarea></label>
+      <button type="submit">Record receipt</button>
+    </form>
+  </section>
+{% endif %}
+
+{{ child_section('delivery_receipts', batch, 'Receipts') }}
+{% endblock %}
