@@ -9,6 +9,7 @@ from flask import url_for
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
+from .. import analytics
 from ..access import in_client, in_team, is_manager, require_view
 from ..extensions import db
 from ..models import Brand, Campaign, Client
@@ -104,4 +105,7 @@ def campaign_detail(campaign_id):
     """Channels, audiences, briefs and delivery batches for one campaign."""
     campaign = db.get_or_404(Campaign, campaign_id)
     require_view(current_user(), campaign)
-    return render_template("campaigns/detail.html", campaign=campaign)
+    return render_template(
+        "campaigns/detail.html", campaign=campaign,
+        progress=analytics.deliverable_progress(campaign),
+    )

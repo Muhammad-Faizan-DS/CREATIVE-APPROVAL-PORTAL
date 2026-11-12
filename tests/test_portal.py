@@ -699,5 +699,65 @@ class ScreenTests(PortalTestCase):
         self.assertEqual(reviewer.get("/brands").status_code, 403)
 
 
+class DashboardAndSearchTests(PortalTestCase):
+    """The charts, the activity feed and search stay inside each account's scope."""
+
+    def setUp(self):
+        super().setUp()
+        self.brief.status = "submitted"
+        creative = Creative(brief_deliverable_id=self.deliverable.id,
+                            created_by=self.designer.id, name="Morning cup hero")
+        db.session.add(creative)
+        db.session.flush()
+        db.session.add(CreativeVersion(creative_id=creative.id,
+                                       created_by=self.designer.id,
+                                       version_number=1))
+        db.session.commit()
+
+    def test_dashboard_renders_the_charts(self):
+        client = self.signed_in("manager@example.test")
+        page = client.get("/")
+        self.assertEqual(page.status_code, 200)
+        for marker in (b"Work in the pipeline", b"New versions per week",
+                       b"Campaign timeline", b"Latest activity"):
+            self.assertIn(marker, page.data)
+
+    def test_charts_offer_a_table_view(self):
+        """Figures are never gated behind the picture."""
+        client = self.signed_in("manager@example.test")
+        page = client.get("/")
+        self.assertIn(b"View the pipeline as a table", page.data)
+
+    def test_pipeline_counts_the_versions_in_scope(self):
+        from portal import analytics
+
+        counted = {
+            row["label"]: row["value"]
+            for row in analytics.pipeline(self.manager)
+        }
+        self.assertEqual(counted["Draft"], 1)
+        self.assertEqual(sum(counted.values()), 1)
+        self.assertEqual(analytics.pipeline(self.outsider)[0]["value"], 0)
+
+    def test_search_finds_a_campaign(self):
+        client = self.signed_in("manager@example.test")
+        page = client.get("/search?q=Autumn")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"Autumn", page.data)
+        self.assertIn(b"Campaigns", page.data)
+
+    def test_search_hides_another_organisation(self):
+        outsider = self.signed_in("other@example.test")
+        page = outsider.get("/search?q=Autumn")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"Nothing matched", page.data)
+
+    def test_short_terms_are_ignored(self):
+        client = self.signed_in("manager@example.test")
+        page = client.get("/search?q=a")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotIn(b"Campaigns</h2>", page.data)
+
+
 if __name__ == "__main__":
     unittest.main()

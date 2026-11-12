@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import status %}
+{% from "charts.html" import line_chart, meter_list, timeline %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -28,6 +29,46 @@
       <li class="stat"><div class="stat-value">{{ value }}</div><div class="stat-label">{{ label }}</div></li>
     {% endfor %}
   </ul>
+{% endif %}
+
+<div class="chart-grid">
+  <section class="panel">
+    <div class="panel-head"><h2>Work in the pipeline</h2></div>
+    <p class="context">Every creative version you can see, by the state it is in.</p>
+    {{ meter_list(pipeline, 'the pipeline', 'No creative versions yet.') }}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>New versions per week</h2></div>
+    <p class="context">Uploads over the last eight weeks.</p>
+    {{ line_chart(weekly, 'new versions per week') }}
+  </section>
+</div>
+
+{% if schedule %}
+  <section class="panel">
+    <div class="panel-head"><h2>Campaign timeline</h2></div>
+    {{ timeline(schedule, today, 'the campaign timeline') }}
+  </section>
+{% endif %}
+
+{% if feed %}
+  <section class="panel">
+    <div class="panel-head"><h2>Latest activity</h2></div>
+    <ol class="feed">
+      {% for event in feed %}
+        <li class="feed-item feed-{{ event.kind }}">
+          <span class="feed-dot" aria-hidden="true"></span>
+          <div>
+            <a href="{{ url_for(event.endpoint[0], **event.endpoint[1]) }}">
+              {{ event.who }} {{ event.what }}</a>
+            <time datetime="{{ event.at.isoformat() }}" class="meta">
+              {{ event.at.strftime('%d %b, %H:%M') }}</time>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
 {% endif %}
 
 {% if campaigns %}

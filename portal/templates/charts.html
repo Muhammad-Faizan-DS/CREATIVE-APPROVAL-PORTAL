@@ -1,0 +1,151 @@
+{# Server-rendered inline SVG charts. No JavaScript, no chart library.
+
+   Rules followed: one hue for the marks (identity comes from the row
+   label, never from colour), hairline recessive grid, 4px rounded data
+   ends, 2px lines with an 8px end marker ringed in the surface colour,
+   selective labels, a <title> on every mark for a native hover tooltip,
+   and a table view underneath so the figures are never gated behind the
+   picture. #}
+
+{% macro chart_table(headers, rows, caption) %}
+  <details class="chart-table">
+    <summary>View {{ caption }} as a table</summary>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>{% for header in headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+{% endmacro %}
+
+{# A name, a bar and a figure per row: compares named states at a glance. #}
+{% macro meter_list(rows, caption, empty='Nothing to show yet.') %}
+  {% set values = rows|map(attribute='value')|list %}
+  {% set top = values|max if values else 0 %}
+  {% if rows and top > 0 %}
+    <ul class="meter-list">
+      {% for row in rows %}
+        <li>
+          <span class="meter-name">{{ row.label }}</span>
+          <span class="meter-track" role="img"
+                aria-label="{{ row.label }}: {{ row.value }}">
+            <span class="meter-fill" style="width: {{ (row.value / top * 100)|round(1) }}%"></span>
+          </span>
+          <span class="meter-value">{{ row.value }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+    {{ chart_table(['State', 'Versions'], rows|rows_of('label', 'value'), caption) }}
+  {% else %}
+    <p class="empty">{{ empty }}</p>
+  {% endif %}
+{% endmacro %}
+
+{# Change over time: one series, so no legend; the title names it. #}
+{% macro line_chart(points, caption, width=640, height=180) %}
+  {% set values = points|map(attribute='value')|list %}
+  {% set top = [(values|max if values else 0), 1]|max %}
+  {% set pad_l, pad_r, pad_t, pad_b = 28, 16, 14, 26 %}
+  {% set plot_w = width - pad_l - pad_r %}
+  {% set plot_h = height - pad_t - pad_b %}
+  {% set step = plot_w / ((points|length - 1) if points|length > 1 else 1) %}
+  <figure class="chart">
+    <svg viewBox="0 0 {{ width }} {{ height }}" class="chart-svg" role="img"
+         aria-label="{{ caption }}" preserveAspectRatio="xMidYMid meet">
+      <title>{{ caption }}</title>
+      {% for tick in [0, 0.5, 1] %}
+        {% set y = pad_t + plot_h - (plot_h * tick) %}
+        <line x1="{{ pad_l }}" y1="{{ y }}" x2="{{ width - pad_r }}" y2="{{ y }}"
+              class="chart-grid"/>
+        <text x="{{ pad_l - 6 }}" y="{{ y + 4 }}" text-anchor="end"
+              class="chart-axis">{{ (top * tick)|round|int }}</text>
+      {% endfor %}
+      {% set coords = [] %}
+      {% for point in points %}
+        {% set x = pad_l + step * loop.index0 %}
+        {% set y = pad_t + plot_h - (plot_h * point.value / top) %}
+        {% set _ = coords.append((x, y)) %}
+      {% endfor %}
+      <polyline class="chart-line" fill="none"
+        points="{% for x, y in coords %}{{ x|round(1) }},{{ y|round(1) }} {% endfor %}"/>
+      {% for point in points %}
+        {% set x, y = coords[loop.index0] %}
+        <circle cx="{{ x|round(1) }}" cy="{{ y|round(1) }}" r="4"
+                class="chart-dot{% if loop.last %} is-last{% endif %}">
+          <title>{{ point.label }}: {{ point.value }}</title>
+        </circle>
+        {% if loop.first or loop.last or loop.index0 % 2 == 0 %}
+          <text x="{{ x|round(1) }}" y="{{ height - 8 }}" text-anchor="middle"
+                class="chart-axis">{{ point.label }}</text>
+        {% endif %}
+      {% endfor %}
+      {% if points %}
+        {% set x, y = coords[-1] %}
+        <text x="{{ (x - 6)|round(1) }}" y="{{ (y - 10)|round(1) }}" text-anchor="end"
+              class="chart-label">{{ points[-1].value }}</text>
+      {% endif %}
+    </svg>
+    <figcaption>{{ caption }}</figcaption>
+  </figure>
+  {{ chart_table(['Week of', 'Versions'], points|rows_of('label', 'value'), caption) }}
+{% endmacro %}
+
+{# Each campaign as a range bar on one shared date axis, with today marked. #}
+{% macro timeline(rows, today, caption) %}
+  {% if rows %}
+    {% set first = rows|map(attribute='starts_on')|list|min %}
+    {% set last = rows|map(attribute='ends_on')|list|max %}
+    {% set span = ((last - first).days or 1) %}
+    <ul class="timeline">
+      {% for row in rows %}
+        {% set offset = ((row.starts_on - first).days / span * 100)|round(2) %}
+        {% set length = (((row.ends_on - row.starts_on).days or 1) / span * 100)|round(2) %}
+        <li>
+          <span class="timeline-name">{{ row.name }}</span>
+          <span class="timeline-track" role="img"
+                aria-label="{{ row.name }}: {{ row.starts_on }} to {{ row.ends_on }}">
+            <span class="timeline-bar" style="margin-left: {{ offset }}%; width: {{ [length, 2]|max }}%"
+                  title="{{ row.starts_on }} to {{ row.ends_on }}"></span>
+            {% if today >= first and today <= last %}
+              <span class="timeline-today"
+                    style="left: {{ ((today - first).days / span * 100)|round(2) }}%"></span>
+            {% endif %}
+          </span>
+          <span class="timeline-dates">{{ row.starts_on.strftime('%d %b') }} – {{ row.ends_on.strftime('%d %b') }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="chart-key"><span class="key-today"></span> today</p>
+    {{ chart_table(['Campaign', 'Starts', 'Ends', 'Status'],
+                   rows|rows_of('name', 'starts_on', 'ends_on', 'status'), caption) }}
+  {% else %}
+    <p class="empty">No campaigns to plot yet.</p>
+  {% endif %}
+{% endmacro %}
+
+{# One ratio against its own limit, per named row. #}
+{% macro progress_list(rows, caption) %}
+  {% if rows %}
+    <ul class="meter-list">
+      {% for row in rows %}
+        {% set share = (row.made / row.wanted * 100) if row.wanted else 0 %}
+        <li>
+          <span class="meter-name">{{ row.label }}</span>
+          <span class="meter-track" role="img"
+                aria-label="{{ row.label }}: {{ row.made }} of {{ row.wanted }} made">
+            <span class="meter-fill{% if share >= 100 %} is-complete{% endif %}"
+                  style="width: {{ [share, 100]|min|round(1) }}%"></span>
+          </span>
+          <span class="meter-value">{{ row.made }}/{{ row.wanted }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No deliverables yet.</p>
+  {% endif %}
+{% endmacro %}

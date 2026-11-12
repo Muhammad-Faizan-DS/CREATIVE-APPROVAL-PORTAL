@@ -169,6 +169,35 @@ description into the create, edit and delete screens. Screens with their own
 business rules (uploads, review decisions, deliveries, and Brand, which is
 written out in long form in `portal/views/campaigns.py`) have dedicated views.
 
+## Dashboard, charts and search
+
+The dashboard leads with figures and three server-rendered charts, all drawn
+as plain HTML and inline SVG — no chart library, no JavaScript:
+
+- **Work in the pipeline** — a meter list counting every creative version the
+  account can see by workflow state.
+- **New versions per week** — a single-series line over the last eight weeks,
+  with the latest value labelled.
+- **Campaign timeline** — each campaign as a range bar on one shared date
+  axis, with today marked.
+- **Latest activity** — uploads, comments, decisions, deliveries and receipts
+  merged into one newest-first feed.
+
+Campaign pages add **deliverable progress**: creatives started against the
+quantity each deliverable asks for.
+
+The charts follow a few rules that keep them honest. One hue carries every
+mark, so colour never has to be told apart; the row label carries identity.
+Each chart has a *View as a table* disclosure underneath, so the figures are
+never locked inside the picture. Marks carry a `title`, which gives a native
+hover tooltip without script. Grid lines are a hairline step off the surface,
+and the dark theme uses its own steps rather than an inverted light palette.
+
+**Search** (the box in the app bar, or `/search`) looks across clients,
+brands, campaigns, briefs and creatives — and only inside the account's own
+scope, so a client reviewer never sees another organisation's work in the
+results.
+
 ## The approval flow
 
 | Visible state | Database condition | Available action |

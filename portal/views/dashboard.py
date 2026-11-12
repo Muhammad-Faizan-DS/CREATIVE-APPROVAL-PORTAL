@@ -1,8 +1,11 @@
 """The landing page. Each role sees the work it owns."""
 
+from datetime import date
+
 from flask import Blueprint, render_template
 from sqlalchemy.orm import selectinload
 
+from .. import analytics
 from ..access import is_client, is_designer, is_manager
 from ..extensions import db
 from ..models import (
@@ -93,4 +96,14 @@ def home():
             .order_by(DeliveryBatch.sent_at.desc())
         ).all()
 
-    return render_template("dashboard.html", user=user, **data)
+    campaigns_in_scope = analytics.visible_campaigns(user)
+    return render_template(
+        "dashboard.html",
+        user=user,
+        pipeline=analytics.pipeline(user, campaigns_in_scope),
+        weekly=analytics.weekly_versions(user, campaigns=campaigns_in_scope),
+        schedule=analytics.schedule(user, campaigns_in_scope),
+        feed=analytics.activity(user, campaigns=campaigns_in_scope),
+        today=date.today(),
+        **data,
+    )

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Search</h1>
+    <p class="context">
+      {% if term %}
+        {{ total }} result{{ '' if total == 1 else 's' }} for &ldquo;{{ term }}&rdquo;
+      {% else %}
+        Find a client, brand, campaign, brief or creative.
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<form method="get" class="form" action="{{ url_for('search.results') }}">
+  <div class="field">
+    <label for="q">Search</label>
+    <input id="q" name="q" value="{{ term }}" type="search" autofocus
+           placeholder="Autumn, Northwind, morning cup…">
+    <p class="hint">Two characters or more. Only records inside your own work are searched.</p>
+  </div>
+  <button type="submit">Search</button>
+</form>
+
+{% for name, rows in groups %}
+  <section class="panel">
+    <div class="panel-head"><h2>{{ name }}</h2></div>
+    <ul class="list">
+      {% for row in rows %}
+        <li>
+          <a href="{{ url_for(row.endpoint[0], **row.endpoint[1]) }}">{{ row.title }}</a>
+          <span class="meta">{{ row.meta }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% else %}
+  {% if term %}
+    <p class="empty">Nothing matched &ldquo;{{ term }}&rdquo;. Try part of a name.</p>
+  {% endif %}
+{% endfor %}
+{% endblock %}

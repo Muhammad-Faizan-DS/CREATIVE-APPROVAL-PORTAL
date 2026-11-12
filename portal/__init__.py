@@ -81,6 +81,7 @@ def create_app(test_config=None):
     from .views.manage import bp as manage_bp
     from .views.manage import children
     from .views.reviews import bp as reviews_bp
+    from .views.search import bp as search_bp
     from .views.settings import bp as settings_bp
     from .workflow import creative_status, version_status
 
@@ -94,10 +95,16 @@ def create_app(test_config=None):
         creatives_bp,
         reviews_bp,
         deliveries_bp,
+        search_bp,
         manage_bp,
     ):
         app.register_blueprint(blueprint)
 
+    def rows_of(records, *keys):
+        """Template filter: turn dicts into table rows for a chart's data view."""
+        return [[record[key] for key in keys] for record in records]
+
+    app.jinja_env.filters["rows_of"] = rows_of
     app.before_request(protect_post)
     app.jinja_env.globals.update(
         csrf_token=csrf_token,

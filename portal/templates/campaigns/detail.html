@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import child_section, status %}
+{% from "charts.html" import progress_list %}
 {% from "icons.html" import icon %}
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block content %}
@@ -16,6 +17,14 @@
   <a class="button secondary" href="{{ url_for('deliveries.index', campaign_id=campaign.id) }}">
     {{ icon('send', 16) }} Delivery batches</a>
 </div>
+{% if progress %}
+  <section class="panel">
+    <div class="panel-head"><h2>Deliverable progress</h2></div>
+    <p class="context">Creatives started against the quantity each deliverable asks for.</p>
+    {{ progress_list(progress, 'deliverable progress') }}
+  </section>
+{% endif %}
+
 {{ child_section('campaign_channels', campaign, 'Channels') }}
 {{ child_section('campaign_audiences', campaign, 'Audiences') }}
 {{ child_section('briefs', campaign, 'Briefs') }}

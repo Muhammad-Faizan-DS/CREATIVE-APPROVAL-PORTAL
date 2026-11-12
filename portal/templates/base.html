@@ -33,6 +33,11 @@
                {% if here.startswith('/settings') %}aria-current="page"{% endif %}>Settings</a>
           {% endif %}
         </nav>
+        <form class="appbar-search" method="get" action="{{ url_for('search.results') }}" role="search">
+          <label class="visually-hidden" for="nav-search">Search records</label>
+          <input id="nav-search" type="search" name="q" placeholder="Search"
+                 value="{{ request.args.get('q', '') if request.endpoint == 'search.results' else '' }}">
+        </form>
         <div class="appbar-end">
           <span class="who">
             <span class="avatar" aria-hidden="true">{{ initials(user.name) }}</span>
