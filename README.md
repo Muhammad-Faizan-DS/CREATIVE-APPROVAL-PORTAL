@@ -207,6 +207,29 @@ what to remove first.
 4. As the manager, build and send a delivery batch. As the client, acknowledge
    it. Finish with the table count from `init-db` and this README.
 
+## Demo deployment
+
+The portal also runs on Vercel as a serverless function (`api/index.py` and
+`vercel.json`). That host has a read-only filesystem apart from a scratch
+directory, so the deployment is a **demo only**:
+
+- `PORTAL_DATA_DIR=/tmp/portal` puts the SQLite file and uploads in the one
+  writable place.
+- `PORTAL_DEMO_SEED=1` builds the schema and the demo records on an empty
+  scratch directory, which happens on every cold start.
+- Anything created through the deployed site — briefs, versions, uploads,
+  decisions — is therefore lost when the instance recycles, and the site
+  returns to the same seeded state.
+
+Sign in there with `manager@example.test`, `designer@example.test` or
+`client@example.test` and the password in `PORTAL_DEMO_PASSWORD`
+(`demo-pass-123` unless the deployment overrides it).
+
+For a deployment that keeps its data, point `SQLALCHEMY_DATABASE_URI` at a
+managed Postgres database and store uploaded images in the database or an
+object store instead of `instance/uploads`. The local SQLite setup described
+above is what the assignment asks for and is unaffected by any of this.
+
 ## Credits
 
 The application factory, the security helpers and the Brand CRUD module follow

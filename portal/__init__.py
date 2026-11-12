@@ -10,6 +10,36 @@ from sqlalchemy import event, inspect
 from .extensions import db
 
 
+def writable_instance_path():
+    """Where the database and uploads live.
+
+    Locally this is Flask's own instance folder. A serverless host such as
+    Vercel has a read-only filesystem apart from a scratch directory, so it
+    sets PORTAL_DATA_DIR and everything writable goes there instead.
+    """
+    data_dir = environ.get("PORTAL_DATA_DIR")
+    return str(Path(data_dir).resolve()) if data_dir else None
+
+
+def bootstrap_demo(app):
+    """Build the database and demo records on an empty scratch directory.
+
+    Only runs when PORTAL_DEMO_SEED=1, which the demo deployment sets. A
+    serverless host wipes the scratch directory on every cold start, so the
+    demo restarts from the same seeded data and anything written in
+    between is lost. Local runs use init-db and seed-demo instead.
+    """
+    if environ.get("PORTAL_DEMO_SEED") != "1":
+        return
+    from .commands import build_demo_data
+
+    with app.app_context():
+        if inspect(db.engine).get_table_names():
+            return
+        db.create_all()
+        build_demo_data(environ.get("PORTAL_DEMO_PASSWORD", "demo-pass-123"))
+
+
 def enable_foreign_keys(connection, _record):
     """SQLite only enforces foreign keys when each connection asks for it."""
     cursor = connection.cursor()
@@ -18,7 +48,7 @@ def enable_foreign_keys(connection, _record):
 
 
 def create_app(test_config=None):
-    app = Flask(__name__)
+    app = Flask(__name__, instance_path=writable_instance_path())
     app.config.from_mapping(
         SECRET_KEY=environ.get("PORTAL_SECRET_KEY"),
         SQLALCHEMY_DATABASE_URI="sqlite:///portal.sqlite3",
@@ -84,6 +114,8 @@ def create_app(test_config=None):
         db.create_all()
         tables = inspect(db.engine).get_table_names()
         click.echo(f"{len(tables)} tables created or already present.")
+
+    bootstrap_demo(app)
 
     @app.errorhandler(403)
     def forbidden(error):

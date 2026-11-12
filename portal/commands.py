@@ -95,6 +95,15 @@ def seed_starter(password):
 @with_appcontext
 def seed_demo(password):
     """Create the full demo: three roles, two client organisations, a brief."""
+    build_demo_data(password)
+    click.echo(
+        "Demo data ready. Sign in as manager@example.test, "
+        "designer@example.test or client@example.test."
+    )
+
+
+def build_demo_data(password):
+    """The demo records, shared by the CLI command and the demo deployment."""
     ensure_user("Dana Price", "manager@example.test", "manager", password)
     designer = ensure_user("Sam Ortiz", "designer@example.test", "designer",
                            password)
@@ -208,7 +217,3 @@ def seed_demo(password):
                   task_id=task.id, label="Export the square preview")
 
     db.session.commit()
-    click.echo(
-        "Demo data ready. Sign in as manager@example.test, "
-        "designer@example.test or client@example.test."
-    )
