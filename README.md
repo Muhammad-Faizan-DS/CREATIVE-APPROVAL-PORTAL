@@ -94,18 +94,30 @@ a password and uses it for every demo account. Open
 
 ### Demo logins
 
-All three accounts use the password you typed at the seed prompt.
+All accounts use the password you typed at the seed prompt.
 
-| Email | Role |
-| --- | --- |
-| `manager@example.test` | Manager (Dana Price) |
-| `designer@example.test` | Designer (Sam Ortiz), member of Studio One |
-| `client@example.test` | Client reviewer (Riya Khan), Northwind Coffee, may approve |
-| `client2@example.test` | Client reviewer (Tom Lund), Lumen Fitness — used to show scope checks |
+| Email | Role | Sees |
+| --- | --- | --- |
+| `manager@example.test` | Manager (Dana Price) | Everything |
+| `producer@example.test` | Manager (Noor Hassan) | Everything |
+| `designer@example.test` | Designer (Sam Ortiz) | Studio One work |
+| `designer2@example.test` | Designer (Mia Chen) | Studio One and Two |
+| `designer3@example.test` | Designer (Leo Vance) | Studio Two work |
+| `client@example.test` | Client reviewer (Riya Khan) | Northwind Coffee, may approve |
+| `client2@example.test` | Client reviewer (Tom Lund) | Lumen Fitness, may approve |
+| `client3@example.test` | Client reviewer (Aisha Rahman) | Lumen and Verity |
+| `client4@example.test` | Client reviewer (Omar Daniels) | Northwind, comments only |
 
-The seed also creates the Northwind Roast brand, the Autumn Roast Launch
-campaign, an Instagram feed channel, a Square 1080 format, a submitted brief
-with a requirement and a deliverable, and a task assigned to the designer.
+`seed-demo` fills every one of the 40 tables: 3 client organisations, 4
+brands with guidelines, assets and audiences, 5 campaigns across 2 teams,
+5 briefs with requirements, references and deliverables, 5 tasks with
+assignees, checklists and comments, and 9 creatives whose versions cover
+every workflow state — a draft, one waiting in review, one sent back with
+a change request, one approved, and one delivered and acknowledged. Each
+version carries a generated PNG preview, so the screens look real.
+
+Running it again changes nothing: every row is matched before it is
+inserted, so the command is safe to repeat.
 
 `seed-starter` is the smaller command from the build guide: it creates only
 `manager@example.test` and one `Demo Client` record.
