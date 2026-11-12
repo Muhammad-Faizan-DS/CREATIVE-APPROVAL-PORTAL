@@ -1,24 +1,32 @@
 {% extends "base.html" %}
 {% from "macros.html" import field_input %}
+{% from "icons.html" import icon %}
 {% block title %}{{ resource.singular|capitalize }} form{% endblock %}
 {% block content %}
-<h1>{{ "Edit" if record.id else "New" }} {{ resource.singular }}</h1>
-{% if parent %}<p class="context">For {{ parent }}</p>{% endif %}
+<div class="page-head">
+  <div>
+    <h1>{{ "Edit" if record.id else "New" }} {{ resource.singular }}</h1>
+    {% if parent %}<p class="context">For {{ parent }}</p>{% endif %}
+  </div>
+  <a class="button secondary" href="{{ back_url }}">{{ icon('back', 16) }} Back</a>
+</div>
+
 {% if errors.get('__all__') %}
-  <p class="error" role="alert">{{ errors['__all__'] }}</p>
+  <p class="flash error" role="alert">{{ icon('alert', 18) }}<span>{{ errors['__all__'] }}</span></p>
 {% endif %}
-<form method="post">
+
+<form method="post" class="form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% for field in resource.fields %}
     {% if field.applies(record) %}
       {{ field_input(field, values[field.name], errors.get(field.name), parent, record) }}
     {% else %}
-      <p class="context">{{ field.label }} cannot change after creation.</p>
+      <p class="hint">{{ field.label }} cannot change after creation.</p>
     {% endif %}
   {% endfor %}
-  <p>
+  <div class="actions-row">
     <button type="submit">Save {{ resource.singular }}</button>
-    <a href="{{ back_url }}">Cancel</a>
-  </p>
+    <a class="button secondary" href="{{ back_url }}">Cancel</a>
+  </div>
 </form>
 {% endblock %}

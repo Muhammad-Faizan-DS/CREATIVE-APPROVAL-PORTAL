@@ -2,12 +2,16 @@
 {% from "macros.html" import child_section %}
 {% block title %}{{ deliverable.label }}{% endblock %}
 {% block content %}
-<h1>{{ deliverable.label }}</h1>
-<p class="context">
-  Brief <a href="{{ url_for('briefs.detail', brief_id=deliverable.brief_id) }}">{{ deliverable.brief.title }}</a>
-  &middot; {{ deliverable.campaign_channel.channel.name }}
-  &middot; {{ deliverable.creative_format }}
-  &middot; quantity {{ deliverable.quantity }}
-</p>
+<div class="page-head">
+  <div>
+    <h1>{{ deliverable.label }}</h1>
+    <p class="context">
+      Brief <a href="{{ url_for('briefs.detail', brief_id=deliverable.brief_id) }}">{{ deliverable.brief.title }}</a>
+      &middot; {{ deliverable.campaign_channel.channel.name }}
+      &middot; {{ deliverable.creative_format }}
+      &middot; {{ deliverable.quantity }} needed
+    </p>
+  </div>
+</div>
 {{ child_section('creatives', deliverable, 'Creatives') }}
 {% endblock %}

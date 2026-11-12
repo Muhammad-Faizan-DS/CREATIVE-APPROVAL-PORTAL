@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% from "macros.html" import child_section %}
+{% from "icons.html" import icon %}
 {% block title %}{{ team.name }}{% endblock %}
 {% block content %}
-<h1>{{ team.name }}</h1>
-{% if team.description %}<p>{{ team.description }}</p>{% endif %}
-<p><a href="{{ url_for('manage.index', key='teams') }}">All teams</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ team.name }}</h1>
+    <p class="context">{{ team.description or "Production team" }}</p>
+  </div>
+  <a class="button secondary" href="{{ url_for('manage.index', key='teams') }}">{{ icon('back', 16) }} All teams</a>
+</div>
 {{ child_section('team_memberships', team, 'Members') }}
 <section class="panel">
-  <h2>Campaigns</h2>
+  <div class="panel-head"><h2>Campaigns</h2></div>
   {% if team.campaigns %}
-    <ul>
+    <ul class="list">
       {% for campaign in team.campaigns %}
         <li><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></li>
       {% endfor %}

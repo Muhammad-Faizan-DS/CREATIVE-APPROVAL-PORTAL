@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Settings{% endblock %}
 {% block content %}
-<h1>Settings</h1>
-<p class="context">Lookup tables used across the portal.</p>
+<div class="page-head">
+  <div>
+    <h1>Settings</h1>
+    <p class="context">Lookup tables the rest of the portal draws on.</p>
+  </div>
+</div>
 <ul class="cards">
   {% for resource in groups %}
-    <li>
-      <a href="{{ url_for('manage.index', key=resource.key) }}">{{ resource.title }}</a>
-    </li>
+    <li><a href="{{ url_for('manage.index', key=resource.key) }}">{{ resource.title }}</a></li>
   {% endfor %}
 </ul>
 {% endblock %}

@@ -9,11 +9,15 @@ from ..models import (
     Brand,
     Brief,
     Campaign,
+    Client,
+    CreativeVersion,
     DeliveryBatch,
     ReviewAssignment,
+    ReviewRound,
     Task,
     TaskAssignee,
 )
+from ..workflow import APPROVED, version_status
 from ..security import current_user, login_required
 
 bp = Blueprint("dashboard", __name__)
@@ -24,7 +28,7 @@ bp = Blueprint("dashboard", __name__)
 def home():
     user = current_user()
     data = {"campaigns": [], "tasks": [], "briefs": [], "reviews": [],
-            "deliveries": []}
+            "deliveries": [], "metrics": []}
 
     if is_manager(user):
         data["campaigns"] = db.session.scalars(
@@ -35,6 +39,21 @@ def home():
         data["deliveries"] = db.session.scalars(
             db.select(DeliveryBatch).order_by(DeliveryBatch.id.desc()).limit(10)
         ).all()
+        open_reviews = db.session.scalars(db.select(ReviewRound)).all()
+        waiting = [r for r in open_reviews if r.decision is None]
+        approved_versions = [
+            version for version in db.session.scalars(db.select(CreativeVersion))
+            if version_status(version) == APPROVED
+        ]
+        data["metrics"] = [
+            ("Clients", db.session.scalar(
+                db.select(db.func.count()).select_from(Client))),
+            ("Brands", db.session.scalar(
+                db.select(db.func.count()).select_from(Brand))),
+            ("Campaigns", len(data["campaigns"])),
+            ("Awaiting review", len(waiting)),
+            ("Ready to deliver", len(approved_versions)),
+        ]
 
     if is_designer(user):
         team_ids = [m.team_id for m in user.team_memberships]

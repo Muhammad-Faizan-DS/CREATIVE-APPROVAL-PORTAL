@@ -1,7 +1,11 @@
 {% extends "base.html" %}
+{% from "icons.html" import icon %}
 {% block title %}{{ code }}{% endblock %}
 {% block content %}
-<h1>{{ code }}</h1>
-<p>{{ message }}</p>
-<p><a href="{{ url_for('dashboard.home') }}">Back to the dashboard</a></p>
+<div class="error-page">
+  <p class="error-code">{{ code }}</p>
+  <h1>{{ "Nothing to see here" if code == 404 else "That is not yours to open" if code == 403 else "That did not work" }}</h1>
+  <p class="lede">{{ message }}</p>
+  <p><a class="button" href="{{ url_for('dashboard.home') }}">{{ icon('back', 16) }} Back to the dashboard</a></p>
+</div>
 {% endblock %}

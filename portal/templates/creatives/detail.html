@@ -1,15 +1,18 @@
 {% extends "base.html" %}
-{% from "macros.html" import child_section %}
+{% from "macros.html" import child_section, status %}
 {% block title %}{{ creative.name }}{% endblock %}
 {% block content %}
-<h1>{{ creative.name }}</h1>
-<p class="context">
-  Deliverable
-  <a href="{{ url_for('creatives.deliverable_detail', deliverable_id=creative.brief_deliverable_id) }}">{{ creative.deliverable.label }}</a>
-  &middot; created by {{ creative.author.name }}
-  &middot; current status <strong>{{ creative_status(creative) }}</strong>
-</p>
-
+<div class="page-head">
+  <div>
+    <h1>{{ creative.name }}</h1>
+    <p class="context">
+      Deliverable
+      <a href="{{ url_for('creatives.deliverable_detail', deliverable_id=creative.brief_deliverable_id) }}">{{ creative.deliverable.label }}</a>
+      &middot; created by {{ creative.author.name }}
+    </p>
+    <p class="context">{{ status(creative_status(creative)) }}</p>
+  </div>
+</div>
 {{ child_section('creative_versions', creative, 'Versions') }}
 {{ child_section('copy_variants', creative, 'Copy variants') }}
 {{ child_section('creative_tags', creative, 'Tags') }}

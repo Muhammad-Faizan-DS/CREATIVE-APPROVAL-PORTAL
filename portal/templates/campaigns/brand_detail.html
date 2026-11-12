@@ -1,32 +1,35 @@
 {% extends "base.html" %}
-{% from "macros.html" import child_section %}
+{% from "macros.html" import child_section, status %}
 {% block title %}{{ brand.name }}{% endblock %}
 {% block content %}
-<h1>{{ brand.name }}</h1>
-<p class="context">Client
-  <a href="{{ url_for('clients.detail', client_id=brand.client_id) }}">{{ brand.client.name }}</a>
-</p>
-
+<div class="page-head">
+  <div>
+    <h1>{{ brand.name }}</h1>
+    <p class="context">Client
+      <a href="{{ url_for('clients.detail', client_id=brand.client_id) }}">{{ brand.client.name }}</a></p>
+  </div>
+</div>
 {{ child_section('brand_guidelines', brand, 'Guidelines') }}
 {{ child_section('brand_assets', brand, 'Assets') }}
 {{ child_section('audiences', brand, 'Audiences') }}
-
 <section class="panel">
-  <h2>Campaigns</h2>
+  <div class="panel-head"><h2>Campaigns</h2></div>
   {% if brand.campaigns %}
-    <table>
-      <thead><tr><th>Campaign</th><th>Team</th><th>Starts</th><th>Status</th></tr></thead>
-      <tbody>
-        {% for campaign in brand.campaigns %}
-          <tr>
-            <td><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></td>
-            <td>{{ campaign.team.name }}</td>
-            <td>{{ campaign.starts_on }}</td>
-            <td>{{ campaign.status }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Campaign</th><th scope="col">Team</th><th scope="col">Starts</th><th scope="col">Status</th></tr></thead>
+        <tbody>
+          {% for campaign in brand.campaigns %}
+            <tr>
+              <td><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></td>
+              <td>{{ campaign.team.name }}</td>
+              <td>{{ campaign.starts_on }}</td>
+              <td>{{ status(campaign.status) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   {% else %}<p class="empty">No campaigns for this brand yet.</p>{% endif %}
 </section>
 {% endblock %}

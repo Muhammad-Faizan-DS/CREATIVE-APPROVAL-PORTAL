@@ -1,4 +1,13 @@
-{% macro delete_button(action, label='Delete', confirm=None) %}
+{% from "icons.html" import icon %}
+
+{% macro status(value) %}
+  {%- set style = badge_class(value) -%}
+  {%- if style -%}
+    <span class="badge badge-{{ style }}">{{ value }}</span>
+  {%- else -%}{{ value }}{%- endif -%}
+{% endmacro %}
+
+{% macro delete_button(action, label='Delete') %}
   <form method="post" action="{{ action }}" class="inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="danger">{{ label }}</button>
@@ -6,13 +15,19 @@
 {% endmacro %}
 
 {% macro field_input(field, value, error, parent=None, record=None) %}
-  <div class="field{% if error %} has-error{% endif %}">
-    <label for="f-{{ field.name }}">{{ field.label }}</label>
+  <div class="field{% if field.kind == 'bool' %} checkbox{% endif %}{% if error %} has-error{% endif %}">
+    {% if field.kind != 'bool' %}
+      <label for="f-{{ field.name }}">
+        {{ field.label }}{% if not field.required %} <span class="hint" style="display:inline">(optional)</span>{% endif %}
+      </label>
+    {% endif %}
     {% if field.kind == 'textarea' %}
       <textarea id="f-{{ field.name }}" name="{{ field.name }}" rows="4"
+        {% if error %}aria-invalid="true" aria-describedby="e-{{ field.name }}"{% endif %}
         {% if field.required %}required{% endif %}>{{ value }}</textarea>
     {% elif field.kind in ('select', 'enum') %}
       <select id="f-{{ field.name }}" name="{{ field.name }}"
+        {% if error %}aria-invalid="true" aria-describedby="e-{{ field.name }}"{% endif %}
         {% if field.required %}required{% endif %}>
         <option value="">Choose {{ field.label|lower }}</option>
         {% for option_value, option_label in field.options(parent, record) %}
@@ -25,17 +40,50 @@
     {% elif field.kind == 'bool' %}
       <input id="f-{{ field.name }}" type="checkbox" name="{{ field.name }}"
         {% if value %}checked{% endif %}>
+      <label for="f-{{ field.name }}">{{ field.label }}</label>
     {% else %}
       <input id="f-{{ field.name }}" name="{{ field.name }}"
         type="{% if field.name == 'password' %}password{% elif field.kind == 'date' %}date{% elif field.kind == 'int' %}number{% elif field.kind == 'email' %}email{% elif field.kind == 'url' %}url{% else %}text{% endif %}"
         value="{{ value }}"
+        {% if field.kind == 'email' %}autocomplete="email"{% endif %}
         {% if field.maxlength %}maxlength="{{ field.maxlength }}"{% endif %}
         {% if field.min_value is not none %}min="{{ field.min_value }}"{% endif %}
         {% if field.max_value is not none %}max="{{ field.max_value }}"{% endif %}
+        {% if error %}aria-invalid="true" aria-describedby="e-{{ field.name }}"{% endif %}
         {% if field.required %}required{% endif %}>
     {% endif %}
     {% if field.help_text %}<p class="hint">{{ field.help_text }}</p>{% endif %}
-    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    {% if error %}<p class="error" id="e-{{ field.name }}" role="alert">{{ error }}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro record_table(resource, rows) %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          {% for header in resource.headers %}<th scope="col">{{ header }}</th>{% endfor %}
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for cell in row.cells %}
+              <td>
+                {% if loop.first and row.detail_url %}
+                  <a href="{{ row.detail_url }}">{{ cell }}</a>
+                {% else %}{{ status(cell) }}{% endif %}
+              </td>
+            {% endfor %}
+            <td class="actions">
+              {% if row.can_edit %}<a href="{{ row.edit_url }}">Edit</a>{% endif %}
+              {% if row.can_delete %}{{ delete_button(row.delete_url) }}{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 {% endmacro %}
 
@@ -46,37 +94,15 @@
       <div class="panel-head">
         <h2>{{ title or data.resource.title }}</h2>
         {% if data.can_create %}
-          <a class="button" href="{{ data.create_url }}">Add {{ data.resource.singular }}</a>
+          <a class="button secondary" href="{{ data.create_url }}">
+            {{ icon('plus', 16) }} Add {{ data.resource.singular }}
+          </a>
         {% endif %}
       </div>
       {% if data.rows %}
-        <table>
-          <thead>
-            <tr>
-              {% for header in data.resource.headers %}<th>{{ header }}</th>{% endfor %}
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in data.rows %}
-              <tr>
-                {% for cell in row.cells %}
-                  <td>
-                    {% if loop.first and row.detail_url %}
-                      <a href="{{ row.detail_url }}">{{ cell }}</a>
-                    {% else %}{{ cell }}{% endif %}
-                  </td>
-                {% endfor %}
-                <td class="actions">
-                  {% if row.can_edit %}<a href="{{ row.edit_url }}">Edit</a>{% endif %}
-                  {% if row.can_delete %}{{ delete_button(row.delete_url) }}{% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        {{ record_table(data.resource, data.rows) }}
       {% else %}
-        <p class="empty">Nothing here yet.</p>
+        <p class="empty">No {{ (title or data.resource.title)|lower }} yet.</p>
       {% endif %}
     </section>
   {% endif %}

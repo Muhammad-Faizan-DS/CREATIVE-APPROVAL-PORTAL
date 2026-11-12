@@ -1,86 +1,116 @@
 {% extends "base.html" %}
+{% from "macros.html" import status %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<h1>Dashboard</h1>
-<p class="context">Signed in as {{ user.name }} ({{ user.role.label }}).</p>
+<div class="page-head">
+  <div>
+    <h1>Good to see you, {{ user.name.split()[0] }}</h1>
+    <p class="context">Signed in as {{ user.role.label }}. Here is the work that belongs to you.</p>
+  </div>
+</div>
+
+{% set tiles = metrics|list %}
+{% if not metrics %}
+  {% if campaigns %}{% set _ = tiles.append(("Campaigns", campaigns|length)) %}{% endif %}
+  {% if user.role.code == 'designer' %}
+    {% set _ = tiles.append(("My tasks", tasks|length)) %}
+    {% set _ = tiles.append(("Still open", tasks|rejectattr('status', 'equalto', 'done')|list|length)) %}
+  {% endif %}
+  {% if user.role.code == 'client' %}
+    {% set _ = tiles.append(("Briefs", briefs|length)) %}
+    {% set _ = tiles.append(("Reviews assigned", reviews|length)) %}
+    {% set _ = tiles.append(("Deliveries", deliveries|length)) %}
+  {% endif %}
+{% endif %}
+{% if tiles %}
+  <ul class="stats">
+    {% for label, value in tiles %}
+      <li class="stat"><div class="stat-value">{{ value }}</div><div class="stat-label">{{ label }}</div></li>
+    {% endfor %}
+  </ul>
+{% endif %}
 
 {% if campaigns %}
   <section class="panel">
-    <h2>Campaigns</h2>
-    <table>
-      <thead><tr><th>Campaign</th><th>Brand</th><th>Team</th><th>Status</th></tr></thead>
-      <tbody>
-        {% for campaign in campaigns %}
-          <tr>
-            <td><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></td>
-            <td>{{ campaign.brand.client.name }} / {{ campaign.brand.name }}</td>
-            <td>{{ campaign.team.name }}</td>
-            <td>{{ campaign.status }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="panel-head"><h2>Campaigns</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Campaign</th><th scope="col">Brand</th><th scope="col">Team</th><th scope="col">Status</th></tr></thead>
+        <tbody>
+          {% for campaign in campaigns %}
+            <tr>
+              <td><a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">{{ campaign.name }}</a></td>
+              <td>{{ campaign.brand.client.name }} / {{ campaign.brand.name }}</td>
+              <td>{{ campaign.team.name }}</td>
+              <td>{{ status(campaign.status) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
 {% endif %}
 
 {% if user.role.code == 'designer' %}
   <section class="panel">
-    <h2>My tasks</h2>
+    <div class="panel-head"><h2>My tasks</h2></div>
     {% if tasks %}
-      <ul>
+      <ul class="list">
         {% for task in tasks %}
           <li>
             <a href="{{ url_for('briefs.task_detail', task_id=task.id) }}">{{ task.title }}</a>
-            &mdash; {{ task.status }}
-            {% if task.due_on %}(due {{ task.due_on }}){% endif %}
+            {{ status(task.status) }}
+            {% if task.due_on %}<span class="meta">due {{ task.due_on }}</span>{% endif %}
           </li>
         {% endfor %}
       </ul>
-    {% else %}<p class="empty">No tasks are assigned to you.</p>{% endif %}
+    {% else %}<p class="empty">No tasks are assigned to you yet.</p>{% endif %}
   </section>
 {% endif %}
 
 {% if user.role.code == 'client' %}
   <section class="panel">
-    <h2>My briefs</h2>
+    <div class="panel-head"><h2>My briefs</h2></div>
     {% if briefs %}
-      <ul>
+      <ul class="list">
         {% for brief in briefs %}
           <li>
             <a href="{{ url_for('briefs.detail', brief_id=brief.id) }}">{{ brief.title }}</a>
-            &mdash; {{ brief.status }}, due {{ brief.due_on }}
+            {{ status(brief.status) }}
+            <span class="meta">due {{ brief.due_on }}</span>
           </li>
         {% endfor %}
       </ul>
-    {% else %}<p class="empty">No briefs yet.</p>{% endif %}
+    {% else %}<p class="empty">No briefs yet. Open a campaign to write one.</p>{% endif %}
   </section>
 
   <section class="panel">
-    <h2>Reviews assigned to me</h2>
+    <div class="panel-head"><h2>Reviews assigned to me</h2></div>
     {% if reviews %}
-      <ul>
+      <ul class="list">
         {% for assignment in reviews %}
           {% set round = assignment.review_round %}
           <li>
             <a href="{{ url_for('reviews.detail', round_id=round.id) }}">
-              {{ round.version.creative.name }} version {{ round.version.version_number }}</a>
-            &mdash; {{ version_status(round.version) }}
+              {{ round.version.creative.name }} &mdash; version {{ round.version.version_number }}</a>
+            {{ status(version_status(round.version)) }}
           </li>
         {% endfor %}
       </ul>
-    {% else %}<p class="empty">Nothing waiting for your review.</p>{% endif %}
+    {% else %}<p class="empty">Nothing is waiting for your review.</p>{% endif %}
   </section>
 {% endif %}
 
 {% if deliveries %}
   <section class="panel">
-    <h2>Deliveries</h2>
-    <ul>
+    <div class="panel-head"><h2>Deliveries</h2></div>
+    <ul class="list">
       {% for batch in deliveries %}
         <li>
           <a href="{{ url_for('deliveries.detail', batch_id=batch.id) }}">{{ batch.title }}</a>
-          &mdash; {{ batch.campaign.name }},
-          {{ "sent " ~ batch.sent_at.strftime('%Y-%m-%d') if batch.is_sent else "draft" }}
+          <span class="meta">{{ batch.campaign.name }}</span>
+          {{ status("Delivered" if batch.is_sent else "Draft") }}
+          {% if batch.is_sent %}<span class="meta">sent {{ batch.sent_at.strftime('%Y-%m-%d') }}</span>{% endif %}
         </li>
       {% endfor %}
     </ul>

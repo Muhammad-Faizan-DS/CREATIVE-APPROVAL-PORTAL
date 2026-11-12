@@ -1,51 +1,65 @@
 {% extends "base.html" %}
-{% from "macros.html" import child_section, delete_button %}
+{% from "macros.html" import child_section, status %}
+{% from "icons.html" import icon %}
 {% block title %}{{ batch.title }}{% endblock %}
 {% block content %}
 {% set user = current_user() %}
-<h1>{{ batch.title }}</h1>
-<p class="context">
-  Campaign
-  <a href="{{ url_for('campaigns.campaign_detail', campaign_id=batch.campaign_id) }}">{{ batch.campaign.name }}</a>
-  &middot; prepared by {{ batch.preparer.name }}
-  &middot; {{ "sent " ~ batch.sent_at.strftime('%Y-%m-%d %H:%M') if batch.is_sent else "draft" }}
-</p>
+<div class="page-head">
+  <div>
+    <h1>{{ batch.title }}</h1>
+    <p class="context">
+      Campaign <a href="{{ url_for('campaigns.campaign_detail', campaign_id=batch.campaign_id) }}">{{ batch.campaign.name }}</a>
+      &middot; prepared by {{ batch.preparer.name }}
+    </p>
+    <p class="context">
+      {{ status("Delivered" if batch.is_sent else "Draft") }}
+      {% if batch.is_sent %}<span class="meta">sent {{ batch.sent_at.strftime('%Y-%m-%d %H:%M') }}</span>{% endif %}
+    </p>
+  </div>
+  {% if not batch.is_sent and user.role.code == 'manager' %}
+    <form method="post" action="{{ url_for('deliveries.send', batch_id=batch.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">{{ icon('send', 16) }} Send to the client</button>
+    </form>
+  {% endif %}
+</div>
 
 {{ child_section('delivery_items', batch, 'Items') }}
 
 {% if batch.is_sent %}
   <section class="panel">
-    <h2>Approved files</h2>
+    <div class="panel-head"><h2>Approved files</h2></div>
     {% for item in batch.items %}
-      <article>
-        <h3>{{ item.label }}</h3>
+      <h3>{{ item.label }}</h3>
+      <div class="previews">
         {% for file in item.version.files %}
-          <p>
-            <a href="{{ url_for('creatives.serve_file', file_id=file.id) }}">{{ file.display_name }}</a>
-            <a href="{{ url_for('creatives.serve_file', file_id=file.id, download=1) }}">Download</a>
-          </p>
-          {% if file.kind == 'preview' %}
-            <img src="{{ url_for('creatives.serve_file', file_id=file.id) }}"
-                 alt="{{ file.display_name }}" class="thumb">
-          {% endif %}
+          <figure>
+            {% if file.kind == 'preview' %}
+              <img src="{{ url_for('creatives.serve_file', file_id=file.id) }}"
+                   alt="{{ item.label }}: {{ file.display_name }}" loading="lazy">
+            {% endif %}
+            <figcaption>
+              <a href="{{ url_for('creatives.serve_file', file_id=file.id, download=1) }}">
+                Download {{ file.display_name }}</a>
+            </figcaption>
+          </figure>
         {% endfor %}
-      </article>
+      </div>
     {% endfor %}
   </section>
-{% elif user.role.code == 'manager' %}
-  <form method="post" action="{{ url_for('deliveries.send', batch_id=batch.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Send this batch to the client</button>
-  </form>
 {% endif %}
 
 {% if can_acknowledge %}
   <section class="panel">
-    <h2>Acknowledge receipt</h2>
+    <div class="panel-head"><h2>Acknowledge receipt</h2></div>
     <form method="post" action="{{ url_for('deliveries.acknowledge', batch_id=batch.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label>Note (optional) <textarea name="note" rows="2"></textarea></label>
-      <button type="submit">Record receipt</button>
+      <div class="field">
+        <label for="note">Note</label>
+        <textarea id="note" name="note" rows="2"></textarea>
+        <p class="hint">Optional. Your name and the time are recorded automatically.</p>
+      </div>
+      <button type="submit">{{ icon('check', 16) }} Record receipt</button>
     </form>
   </section>
 {% endif %}

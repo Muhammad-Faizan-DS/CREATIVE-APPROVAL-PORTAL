@@ -74,7 +74,7 @@ def version_detail(version_id):
     return render_template(
         "versions/detail.html",
         version=version,
-        status=version_status(version),
+        status_text=version_status(version),
         can_edit=can_produce(user, campaign) and is_draft(version),
     )
 

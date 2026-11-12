@@ -1,69 +1,81 @@
 {% extends "base.html" %}
-{% from "macros.html" import child_section, delete_button %}
+{% from "macros.html" import child_section, delete_button, status %}
+{% from "icons.html" import icon %}
 {% block title %}Version {{ version.version_number }}{% endblock %}
 {% block content %}
-{% set user = current_user() %}
 {% set campaign = version.creative.deliverable.brief.campaign %}
-<h1>{{ version.creative.name }} &mdash; version {{ version.version_number }}</h1>
-<p class="context">
-  Creative <a href="{{ url_for('creatives.detail', creative_id=version.creative_id) }}">{{ version.creative.name }}</a>
-  &middot; uploaded by {{ version.author.name }}
-  &middot; status <strong>{{ status }}</strong>
-</p>
-{% if version.notes %}<p>{{ version.notes }}</p>{% endif %}
+<div class="page-head">
+  <div>
+    <h1>{{ version.creative.name }} &mdash; version {{ version.version_number }}</h1>
+    <p class="context">
+      Creative <a href="{{ url_for('creatives.detail', creative_id=version.creative_id) }}">{{ version.creative.name }}</a>
+      &middot; uploaded by {{ version.author.name }}
+      &middot; {{ version.created_at.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+    <p class="context">{{ status(status_text) }}</p>
+  </div>
+</div>
+{% if version.notes %}
+  <section class="panel"><div class="panel-head"><h2>Notes</h2></div><p style="margin:0">{{ version.notes }}</p></section>
+{% endif %}
 
 <section class="panel">
-  <h2>Previews</h2>
+  <div class="panel-head"><h2>Files</h2></div>
   {% if version.files %}
-    <div class="previews">
-      {% for file in version.files %}
-        {% if file.kind == 'preview' %}
+    {% if version.previews %}
+      <div class="previews">
+        {% for file in version.previews %}
           <figure>
             <img src="{{ url_for('creatives.serve_file', file_id=file.id) }}"
-                 alt="{{ file.display_name }}">
+                 alt="Preview of {{ version.creative.name }}: {{ file.display_name }}" loading="lazy">
             <figcaption>{{ file.display_name }}</figcaption>
           </figure>
-        {% endif %}
-      {% endfor %}
-    </div>
-    <table>
-      <thead><tr><th>File</th><th>Kind</th><th>Type</th><th>Size</th><th>Actions</th></tr></thead>
-      <tbody>
-        {% for file in version.files %}
-          <tr>
-            <td><a href="{{ url_for('creatives.serve_file', file_id=file.id) }}">{{ file.display_name }}</a></td>
-            <td>{{ file.kind }}</td>
-            <td>{{ file.mime_type }}</td>
-            <td>{{ file.size_bytes }} bytes</td>
-            <td class="actions">
-              <a href="{{ url_for('creatives.serve_file', file_id=file.id, download=1) }}">Download</a>
-              {% if can_edit %}
-                <a href="{{ url_for('manage.edit', key='version_files', record_id=file.id) }}">Edit</a>
-                {{ delete_button(url_for('creatives.delete_file', file_id=file.id)) }}
-              {% endif %}
-            </td>
-          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
+    {% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">File</th><th scope="col">Kind</th><th scope="col">Type</th><th scope="col">Size</th><th scope="col">Actions</th></tr></thead>
+        <tbody>
+          {% for file in version.files %}
+            <tr>
+              <td><a href="{{ url_for('creatives.serve_file', file_id=file.id) }}">{{ file.display_name }}</a></td>
+              <td>{{ file.kind }}</td>
+              <td>{{ file.mime_type }}</td>
+              <td>{{ "%.1f"|format(file.size_bytes / 1024) }} KB</td>
+              <td class="actions">
+                <a href="{{ url_for('creatives.serve_file', file_id=file.id, download=1) }}">Download</a>
+                {% if can_edit %}
+                  <a href="{{ url_for('manage.edit', key='version_files', record_id=file.id) }}">Edit</a>
+                  {{ delete_button(url_for('creatives.delete_file', file_id=file.id)) }}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   {% else %}
-    <p class="empty">No files uploaded yet.</p>
+    <p class="empty">No files uploaded yet. A preview is required before review.</p>
   {% endif %}
 
   {% if can_edit %}
-    <form method="post" enctype="multipart/form-data"
+    <form method="post" enctype="multipart/form-data" style="margin-top:var(--space-4)"
           action="{{ url_for('creatives.upload_file', version_id=version.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label>Image file (PNG or JPEG, up to 8 MB)
-        <input type="file" name="image" accept="image/png,image/jpeg" required>
-      </label>
-      <label>Kind
-        <select name="kind">
+      <div class="field">
+        <label for="image">Image file</label>
+        <input id="image" type="file" name="image" accept="image/png,image/jpeg" required>
+        <p class="hint">PNG or JPEG, up to 8 MB.</p>
+      </div>
+      <div class="field">
+        <label for="kind">Kind</label>
+        <select id="kind" name="kind">
           <option value="preview">preview</option>
           <option value="export">export</option>
         </select>
-      </label>
-      <button type="submit">Upload image</button>
+      </div>
+      <button type="submit">{{ icon('upload', 16) }} Upload image</button>
     </form>
   {% endif %}
 </section>
@@ -71,18 +83,18 @@
 {{ child_section('version_copy_variants', version, 'Copy used in this version') }}
 
 <section class="panel">
-  <h2>Review</h2>
+  <div class="panel-head"><h2>Review</h2></div>
   {% if version.review_round %}
-    <p>
-      <a href="{{ url_for('reviews.detail', round_id=version.review_round.id) }}">
-        Open the review round</a>
-      &mdash; opened {{ version.review_round.opened_at.strftime('%Y-%m-%d %H:%M') }}
+    <p style="margin:0">
+      <a class="button secondary" href="{{ url_for('reviews.detail', round_id=version.review_round.id) }}">Open the review round</a>
+      <span class="meta">opened {{ version.review_round.opened_at.strftime('%Y-%m-%d %H:%M') }}</span>
     </p>
   {% elif can_edit %}
     <form method="post" action="{{ url_for('reviews.submit_version', version_id=version.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label>Send to reviewer
-        <select name="reviewer_id" required>
+      <div class="field">
+        <label for="reviewer">Send to reviewer</label>
+        <select id="reviewer" name="reviewer_id" required>
           <option value="">Choose a reviewer</option>
           {% for membership in campaign.brand.client.memberships %}
             <option value="{{ membership.user_id }}">
@@ -90,8 +102,9 @@
             </option>
           {% endfor %}
         </select>
-      </label>
-      <button type="submit">Submit for review</button>
+        <p class="hint">Only members of {{ campaign.brand.client.name }} can review this work.</p>
+      </div>
+      <button type="submit">{{ icon('send', 16) }} Submit for review</button>
     </form>
   {% else %}
     <p class="empty">This version has not been submitted for review.</p>

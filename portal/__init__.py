@@ -70,6 +70,7 @@ def create_app(test_config=None):
     from .commands import seed_demo, seed_starter
     from .resources import record_url
     from .security import csrf_token, current_user, protect_post
+    from .ui import badge_class, initials
     from .views.auth import bp as auth_bp
     from .views.briefs import bp as briefs_bp
     from .views.campaigns import bp as campaigns_bp
@@ -105,6 +106,8 @@ def create_app(test_config=None):
         record_url=record_url,
         version_status=version_status,
         creative_status=creative_status,
+        badge_class=badge_class,
+        initials=initials,
     )
     app.cli.add_command(seed_starter)
     app.cli.add_command(seed_demo)

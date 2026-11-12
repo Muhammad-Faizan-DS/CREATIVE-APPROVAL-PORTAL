@@ -1,23 +1,31 @@
 {% extends "base.html" %}
+{% from "macros.html" import delete_button %}
+{% from "icons.html" import icon %}
 {% block title %}Brands{% endblock %}
 {% block content %}
-<h1>Brands</h1>
-<p><a class="button" href="{{ url_for('campaigns.brand_create') }}">New brand</a></p>
-<ul>
+<div class="page-head">
+  <div>
+    <h1>Brands</h1>
+    <p class="context">{{ brands|length }} brand{{ '' if brands|length == 1 else 's' }} across your clients</p>
+  </div>
+  <a class="button" href="{{ url_for('campaigns.brand_create') }}">{{ icon('plus', 16) }} New brand</a>
+</div>
+<ul class="list">
 {% for brand in brands %}
   <li>
     <a href="{{ url_for('campaigns.brand_detail', brand_id=brand.id) }}">{{ brand.name }}</a>
-    ({{ brand.client.name }})
-    <a href="{{ url_for('campaigns.brand_edit', brand_id=brand.id) }}">Edit</a>
-    <form method="post"
-          action="{{ url_for('campaigns.brand_delete', brand_id=brand.id) }}"
-          class="inline">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="danger">Delete brand</button>
-    </form>
+    <span class="meta">{{ brand.client.name }}</span>
+    <span class="spacer">
+      <a class="button secondary" href="{{ url_for('campaigns.brand_edit', brand_id=brand.id) }}">Edit</a>
+      <form method="post" class="inline"
+            action="{{ url_for('campaigns.brand_delete', brand_id=brand.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="danger">Delete brand</button>
+      </form>
+    </span>
   </li>
 {% else %}
-  <li>No brands have been added.</li>
+  <li><span class="meta">No brands have been added.</span></li>
 {% endfor %}
 </ul>
 {% endblock %}

@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 {% from "macros.html" import child_section %}
+{% from "icons.html" import icon %}
 {% block title %}Deliveries{% endblock %}
 {% block content %}
-<h1>Deliveries for {{ campaign.name }}</h1>
-<p class="context">
-  <a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">Back to the campaign</a>
-</p>
+<div class="page-head">
+  <div>
+    <h1>Deliveries</h1>
+    <p class="context">Approved work handed to {{ campaign.brand.client.name }} for {{ campaign.name }}</p>
+  </div>
+  <a class="button secondary" href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}">
+    {{ icon('back', 16) }} Back to the campaign</a>
+</div>
 {{ child_section('delivery_batches', campaign, 'Delivery batches') }}
 {% endblock %}

@@ -117,6 +117,12 @@ def index(key):
                 "obj": row,
                 "cells": resource.cells(row),
                 "detail_url": record_url(row) if resource.has_detail else None,
+                "can_edit": resource.editable
+                and resource.allow(user, "edit", None, row),
+                "can_delete": resource.deletable
+                and resource.allow(user, "delete", None, row),
+                "edit_url": url_for("manage.edit", key=key, record_id=row.id),
+                "delete_url": url_for("manage.delete", key=key, record_id=row.id),
             }
             for row in rows
         ],

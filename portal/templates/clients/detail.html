@@ -2,18 +2,25 @@
 {% from "macros.html" import child_section %}
 {% block title %}{{ client.name }}{% endblock %}
 {% block content %}
-<h1>{{ client.name }}</h1>
-{% if client.website_url %}<p><a href="{{ client.website_url }}">{{ client.website_url }}</a></p>{% endif %}
-
+<div class="page-head">
+  <div>
+    <h1>{{ client.name }}</h1>
+    <p class="context">
+      {% if client.website_url %}<a href="{{ client.website_url }}">{{ client.website_url }}</a> &middot; {% endif %}
+      {{ client.brands|length }} brand{{ '' if client.brands|length == 1 else 's' }} &middot;
+      {{ client.memberships|length }} reviewer{{ '' if client.memberships|length == 1 else 's' }}
+    </p>
+  </div>
+</div>
 {{ child_section('client_memberships', client, 'Members') }}
 {{ child_section('client_contacts', client, 'Contacts') }}
-
 <section class="panel">
-  <h2>Brands</h2>
+  <div class="panel-head"><h2>Brands</h2></div>
   {% if client.brands %}
-    <ul>
+    <ul class="list">
       {% for brand in client.brands %}
-        <li><a href="{{ url_for('campaigns.brand_detail', brand_id=brand.id) }}">{{ brand.name }}</a></li>
+        <li><a href="{{ url_for('campaigns.brand_detail', brand_id=brand.id) }}">{{ brand.name }}</a>
+          <span class="meta">{{ brand.campaigns|length }} campaign{{ '' if brand.campaigns|length == 1 else 's' }}</span></li>
       {% endfor %}
     </ul>
   {% else %}<p class="empty">No brands yet.</p>{% endif %}

@@ -1,13 +1,17 @@
 {% extends "base.html" %}
-{% from "macros.html" import child_section %}
+{% from "macros.html" import child_section, status %}
 {% block title %}{{ task.title }}{% endblock %}
 {% block content %}
-<h1>{{ task.title }}</h1>
-<p class="context">
-  Brief <a href="{{ url_for('briefs.detail', brief_id=task.brief_id) }}">{{ task.brief.title }}</a>
-  &middot; status {{ task.status }}
-  {% if task.due_on %}&middot; due {{ task.due_on }}{% endif %}
-</p>
+<div class="page-head">
+  <div>
+    <h1>{{ task.title }}</h1>
+    <p class="context">
+      Brief <a href="{{ url_for('briefs.detail', brief_id=task.brief_id) }}">{{ task.brief.title }}</a>
+      {% if task.due_on %}&middot; due {{ task.due_on }}{% endif %}
+    </p>
+    <p class="context">{{ status(task.status) }}</p>
+  </div>
+</div>
 {{ child_section('task_assignees', task, 'Assignees') }}
 {{ child_section('task_checklist_items', task, 'Checklist') }}
 {{ child_section('task_comments', task, 'Comments') }}

@@ -1,25 +1,33 @@
 {% extends "base.html" %}
 {% from "macros.html" import delete_button %}
+{% from "icons.html" import icon %}
 {% block title %}Clients{% endblock %}
 {% block content %}
-<h1>Clients</h1>
-<p><a class="button" href="{{ url_for('manage.create', key='clients') }}">New client</a></p>
+<div class="page-head">
+  <div>
+    <h1>Clients</h1>
+    <p class="context">{{ clients|length }} organisation{{ '' if clients|length == 1 else 's' }}</p>
+  </div>
+  <a class="button" href="{{ url_for('manage.create', key='clients') }}">{{ icon('plus', 16) }} New client</a>
+</div>
 {% if clients %}
-  <table>
-    <thead><tr><th>Client</th><th>Website</th><th>Brands</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for client in clients %}
-        <tr>
-          <td><a href="{{ url_for('clients.detail', client_id=client.id) }}">{{ client.name }}</a></td>
-          <td>{{ client.website_url or '' }}</td>
-          <td>{{ client.brands|length }}</td>
-          <td class="actions">
-            <a href="{{ url_for('manage.edit', key='clients', record_id=client.id) }}">Edit</a>
-            {{ delete_button(url_for('manage.delete', key='clients', record_id=client.id)) }}
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Client</th><th scope="col">Website</th><th scope="col">Brands</th><th scope="col">Actions</th></tr></thead>
+      <tbody>
+        {% for client in clients %}
+          <tr>
+            <td><a href="{{ url_for('clients.detail', client_id=client.id) }}">{{ client.name }}</a></td>
+            <td>{{ client.website_url or '—' }}</td>
+            <td>{{ client.brands|length }}</td>
+            <td class="actions">
+              <a href="{{ url_for('manage.edit', key='clients', record_id=client.id) }}">Edit</a>
+              {{ delete_button(url_for('manage.delete', key='clients', record_id=client.id)) }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% else %}<p class="empty">No clients have been added.</p>{% endif %}
 {% endblock %}

@@ -1,28 +1,35 @@
 {% extends "base.html" %}
-{% from "macros.html" import child_section %}
+{% from "macros.html" import child_section, status %}
+{% from "icons.html" import icon %}
 {% block title %}{{ brief.title }}{% endblock %}
 {% block content %}
 {% set user = current_user() %}
-<h1>{{ brief.title }}</h1>
-<p class="context">
-  Campaign
-  <a href="{{ url_for('campaigns.campaign_detail', campaign_id=brief.campaign_id) }}">{{ brief.campaign.name }}</a>
-  &middot; written by {{ brief.author.name }} &middot; due {{ brief.due_on }}
-  &middot; status <strong>{{ brief.status }}</strong>
-</p>
-<p>{{ brief.goal }}</p>
+<div class="page-head">
+  <div>
+    <h1>{{ brief.title }}</h1>
+    <p class="context">
+      Campaign <a href="{{ url_for('campaigns.campaign_detail', campaign_id=brief.campaign_id) }}">{{ brief.campaign.name }}</a>
+      &middot; written by {{ brief.author.name }} &middot; due {{ brief.due_on }}
+    </p>
+    <p class="context">{{ status(brief.status) }}</p>
+  </div>
+  {% if brief.status == 'draft' %}
+    <form method="post" action="{{ url_for('briefs.submit', brief_id=brief.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">{{ icon('send', 16) }} Submit brief to the team</button>
+    </form>
+  {% elif user.role.code == 'manager' %}
+    <form method="post" action="{{ url_for('briefs.reopen', brief_id=brief.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="secondary">Reopen as draft</button>
+    </form>
+  {% endif %}
+</div>
 
-{% if brief.status == 'draft' %}
-  <form method="post" action="{{ url_for('briefs.submit', brief_id=brief.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Submit brief to the team</button>
-  </form>
-{% elif user.role.code == 'manager' %}
-  <form method="post" action="{{ url_for('briefs.reopen', brief_id=brief.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Reopen as draft</button>
-  </form>
-{% endif %}
+<section class="panel">
+  <div class="panel-head"><h2>Goal</h2></div>
+  <p style="margin:0">{{ brief.goal }}</p>
+</section>
 
 {{ child_section('brief_requirements', brief, 'Requirements') }}
 {{ child_section('brief_references', brief, 'References') }}

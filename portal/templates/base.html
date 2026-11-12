@@ -3,34 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Creative Approval Portal{% endblock %}</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Creative Approval Portal: briefs, drafts, client review and delivery of static ads.">
+  <title>{% block title %}Creative Approval Portal{% endblock %} &middot; Creative Approval Portal</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  {% from "icons.html" import icon %}
   {% set user = current_user() %}
+  <a class="skip-link" href="#main">Skip to main content</a>
   {% if user %}
-    <header>
-      <nav aria-label="Main navigation">
-        <a class="brand" href="{{ url_for('dashboard.home') }}">Creative Approval Portal</a>
-        <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
-        {% if user.role.code == 'manager' %}
-          <a href="{{ url_for('clients.index') }}">Clients</a>
-          <a href="{{ url_for('campaigns.brand_list') }}">Brands</a>
-          <a href="{{ url_for('manage.index', key='campaigns') }}">Campaigns</a>
-          <a href="{{ url_for('settings.index') }}">Settings</a>
-        {% endif %}
-        <span class="who">{{ user.name }} &middot; {{ user.role.label }}</span>
-        <form method="post" action="{{ url_for('auth.logout') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit">Sign out</button>
-        </form>
-      </nav>
+    <header class="appbar">
+      <div class="appbar-inner">
+        <a class="brand" href="{{ url_for('dashboard.home') }}">
+          {{ icon('logo', 22) }}<span>Creative Approval</span>
+        </a>
+        <nav class="navlinks" aria-label="Main">
+          {% set here = request.path %}
+          <a href="{{ url_for('dashboard.home') }}"
+             {% if here == '/' %}aria-current="page"{% endif %}>Dashboard</a>
+          {% if user.role.code == 'manager' %}
+            <a href="{{ url_for('clients.index') }}"
+               {% if here.startswith('/clients') %}aria-current="page"{% endif %}>Clients</a>
+            <a href="{{ url_for('campaigns.brand_list') }}"
+               {% if here.startswith('/brands') %}aria-current="page"{% endif %}>Brands</a>
+            <a href="{{ url_for('manage.index', key='campaigns') }}"
+               {% if here.startswith('/campaigns') or here.startswith('/manage/campaigns') %}aria-current="page"{% endif %}>Campaigns</a>
+            <a href="{{ url_for('settings.index') }}"
+               {% if here.startswith('/settings') %}aria-current="page"{% endif %}>Settings</a>
+          {% endif %}
+        </nav>
+        <div class="appbar-end">
+          <span class="who">
+            <span class="avatar" aria-hidden="true">{{ initials(user.name) }}</span>
+            <span class="who-text">
+              <span>{{ user.name }}</span>
+              <span class="who-role">{{ user.role.label }}</span>
+            </span>
+          </span>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="secondary">{{ icon('exit', 16) }} Sign out</button>
+          </form>
+        </div>
+      </div>
     </header>
   {% endif %}
-  <main>
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-      <p class="flash {{ category }}" role="status">{{ message }}</p>
-    {% endfor %}
+
+  <main id="main">
+    <div aria-live="polite">
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+        <p class="flash {{ category }}" role="status">
+          {{ icon(('check' if category == 'success' else 'alert'), 18) }}
+          <span>{{ message }}</span>
+        </p>
+      {% endfor %}
+    </div>
     {% block content %}{% endblock %}
   </main>
 </body>
